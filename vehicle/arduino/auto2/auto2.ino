@@ -4,6 +4,8 @@
  * Controls stearing servo and ESC of a RC car according to 
  * incomming serial commands.
  * 
+ * Accepted serial commands: "steering_int_value throttle_int_value" e.q. "123 87"
+ * 
  * (c) 2016 Jaroslav Lžičař
  *
  * ----------------------------------------------------------------------------

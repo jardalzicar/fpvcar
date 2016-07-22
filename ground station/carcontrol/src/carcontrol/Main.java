@@ -1,34 +1,29 @@
 package carcontrol;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Slider;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 public class Main extends Application {
-    Slider stearingSlider;
+    Slider steeringSlider;
     Slider throttleSlider;
     BorderPane pane;
     Controller controller;
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        controller = new Controller();
+        controller = new Controller( new Socket("10.0.0.61", 8888));
 
         Task<Void> task = new Task<Void>(){
             @Override
             protected Void call() throws Exception {
-
                 controller.run();
                 return null;
             }
@@ -47,6 +42,10 @@ public class Main extends Application {
         primaryStage.show();
     }
 
+    public static void main(String[] args) {
+        launch(args);
+    }
+
     public void initGUI(){
         pane = new BorderPane();
         pane.setPadding(new Insets(20,20,20,20));
@@ -58,25 +57,26 @@ public class Main extends Application {
         throttleSlider.setShowTickMarks(true);
         throttleSlider.setMajorTickUnit(90);
         throttleSlider.setMinorTickCount(9);
-        throttleSlider.setDisable(true);
+        throttleSlider.setDisable(false);
+        throttleSlider.setFocusTraversable(false);
         pane.setCenter(throttleSlider);
 
-        stearingSlider = new Slider(0,180,90);
-        stearingSlider.setShowTickLabels(true);
-        stearingSlider.setShowTickMarks(true);
-        stearingSlider.setMajorTickUnit(90);
-        stearingSlider.setMinorTickCount(9);
-        stearingSlider.setDisable(true);
-        pane.setBottom(stearingSlider);
+        steeringSlider = new Slider(0,180,90);
+        steeringSlider.setShowTickLabels(true);
+        steeringSlider.setShowTickMarks(true);
+        steeringSlider.setMajorTickUnit(90);
+        steeringSlider.setMinorTickCount(9);
+        steeringSlider.setDisable(false);
+        steeringSlider.setFocusTraversable(false);
+        pane.setBottom(steeringSlider);
 
         throttleSlider.valueProperty().bindBidirectional(controller.throttle);
-        stearingSlider.valueProperty().bindBidirectional(controller.steering);
+        steeringSlider.valueProperty().bindBidirectional(controller.steering);
 
         // Also works ;)
         /*
         controller.steering.addListener((observable, oldValue, newValue) -> {
-            stearingSlider.setValue((int) newValue);
-            System.out.println("steering value changed");
+            steeringSlider.setValue((int) newValue);
         });
         */
     }
@@ -108,7 +108,5 @@ public class Main extends Application {
     }
 
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+
 }

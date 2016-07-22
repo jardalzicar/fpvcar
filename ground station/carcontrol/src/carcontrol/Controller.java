@@ -8,7 +8,8 @@ public class Controller {
     int defaultThrottle = 90;
     int minThrottle = 0;
     int maxThrottle = 180;
-    int throttleIncrement = 0;
+    double throttleIncrement = 0;
+    double throttleCoefficient = 0.5;
 
     int defaultSteering = 90;
     int minSteering = 0;
@@ -18,11 +19,13 @@ public class Controller {
     public IntegerProperty steering = new SimpleIntegerProperty(defaultSteering);
     public IntegerProperty throttle = new SimpleIntegerProperty(defaultThrottle);
 
-    int period = 60;
+    int period = 20;
     int frequency = 1000/ period;
 
-    public Controller() {
+    Socket socket;
 
+    public Controller(Socket socket) {
+        this.socket = socket;
     }
 
     public void run(){
@@ -58,17 +61,19 @@ public class Controller {
             steeringIncrement = 0;
         }
 
-        System.out.println(steering.get()+" "+throttle.get());
+        //System.out.println(steering.get()+" "+throttle.get());
     }
 
 
 
     public void throttleUp(){
-        throttleIncrement = 2;
+        if(throttleIncrement < 0.5) throttleIncrement = 0.5;
+        throttleIncrement += throttleCoefficient;
     }
 
     public void throttleDown(){
-        throttleIncrement = -2;
+        if(throttleIncrement > -0.5) throttleIncrement = -0.5;
+        throttleIncrement -= throttleCoefficient;
     }
 
     public void stopThrottle(){
@@ -77,11 +82,11 @@ public class Controller {
     }
 
     public void steeringLeft(){
-        steeringIncrement = -2;
+        steeringIncrement = -4;
     }
 
     public void steeringRight(){
-        steeringIncrement = 2;
+        steeringIncrement = 4;
     }
 
     public void stopSteering(){
@@ -90,6 +95,7 @@ public class Controller {
     }
 
     private void sendValues() {
+        socket.sendValues(throttle.get(), steering.get());
     }
 
 }
