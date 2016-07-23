@@ -95,7 +95,7 @@ public class Controller {
     }
 
     private void sendValues() {
-        socket.sendValues(throttle.get(), steering.get());
+        socket.sendValues(throttle.get()+1, steering.get()+1);
     }
 
 }

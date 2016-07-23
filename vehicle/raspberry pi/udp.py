@@ -3,9 +3,10 @@ import serial
 import sys
 
 
-IP = '10.0.0.61'
+IP = 'raspberrypi.local'
 PORT = 8888
 SERIAL = '/dev/ttyACM0'
+serialActive = False
 
 # Recieve data from socket
 def recievePacket():
@@ -29,17 +30,21 @@ except socket.error as msg:
 
 # Setup serial port
 try:
-	ser = serial.Serial(SERIAL, 9600)
+	ser = serial.Serial(SERIAL, 115200)
+	serialActive = True
+	print 'Serial communication established'
 except Exception as msg:
-	print 'Failed open serial port'
+	print 'Failed open serial port, continuing without serial communication'
 	print str(msg)
-	sys.exit()
 
 # Main loop
 while(1):
 	data = recievePacket()
-	print 'Recieved: ' + data
-	ser.write(data)
+	#print 'Recieved: ' + data
+	if serialActive:
+		ser.write(data)
+		bytesToRead = ser.inWaiting()
+    	print ser.read(bytesToRead)
 
 
 

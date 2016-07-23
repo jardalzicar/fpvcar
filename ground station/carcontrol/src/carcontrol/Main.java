@@ -19,7 +19,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        controller = new Controller( new Socket("10.0.0.61", 8888));
+        controller = new Controller( new Socket("raspberrypi.local", 8888));
 
         Task<Void> task = new Task<Void>(){
             @Override
@@ -88,8 +88,8 @@ public class Main extends Application {
             switch (event.getCode()){
                 case UP: controller.throttleUp(); break;
                 case DOWN: controller.throttleDown(); break;
-                case LEFT: controller.steeringLeft(); break;
-                case RIGHT: controller.steeringRight(); break;
+                case RIGHT: controller.steeringLeft(); break;
+                case LEFT: controller.steeringRight(); break;
             }
         }
     }

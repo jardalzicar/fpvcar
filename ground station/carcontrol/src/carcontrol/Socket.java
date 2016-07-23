@@ -29,7 +29,7 @@ public class Socket {
     }
 
     public void sendValues(int throttle, int steering){
-        String message = steering + " " + throttle;
+        String message = steering + " " + throttle+"\n";
         DatagramPacket packet = new DatagramPacket(message.getBytes(), message.length(), address, port);
         try {
             socket.send(packet);
