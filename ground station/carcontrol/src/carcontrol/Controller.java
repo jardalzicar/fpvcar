@@ -2,100 +2,115 @@ package carcontrol;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.concurrent.Task;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 public class Controller {
 
-    int defaultThrottle = 90;
-    int minThrottle = 0;
-    int maxThrottle = 180;
-    double throttleIncrement = 0;
-    double throttleCoefficient = 0.5;
+    private RemoteControl remoteControl;
+    private VideoStream videoStream;
+    private Joystick joystick;
 
-    int defaultSteering = 90;
-    int minSteering = 0;
-    int maxSteering = 180;
-    int steeringIncrement = 0;
+    private Thread remoteControlThread;
+    private Thread joystickThread;
+    private Thread videoStreamThread;
 
-    public IntegerProperty steering = new SimpleIntegerProperty(defaultSteering);
-    public IntegerProperty throttle = new SimpleIntegerProperty(defaultThrottle);
 
-    int period = 20;
-    int frequency = 1000/ period;
+    public void startRemoteControl(Socket socket){
+        remoteControl = new RemoteControl(socket);
 
-    Socket socket;
-
-    public Controller(Socket socket) {
-        this.socket = socket;
-    }
-
-    public void run(){
-        while (true){
-            processValues();
-            sendValues();
-            try {
-                Thread.sleep(period);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        Task<Void> task = new Task<Void>(){
+            @Override
+            protected Void call() throws Exception {
+                remoteControl.run();
+                return null;
             }
+        };
+
+        remoteControlThread = new Thread(task);
+        remoteControlThread.start();
+    }
+
+    public void stopRemoteControl(){
+        remoteControl.stop();
+        try {
+            remoteControlThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
-    public void processValues(){
-        throttle.setValue(throttle.get() + throttleIncrement);
-        steering.setValue(steering.get() + steeringIncrement);
+    public void startJoystick(Socket socket){
+        joystick = new Joystick(socket);
 
-        if(throttle.get()  >= maxThrottle){
-            throttle.setValue(maxThrottle);
-            throttleIncrement = 0;
+        Task<Void> task = new Task<Void>(){
+            @Override
+            protected Void call() throws Exception {
+                joystick.run();
+                return null;
+            }
+        };
+
+        joystickThread = new Thread(task);
+        joystickThread.start();
+    }
+
+    public void stopJoystick(){
+        joystick.stop();
+        try {
+            joystickThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        if(throttle.get()  <= minThrottle){
-            throttle.setValue(minThrottle);
-            throttleIncrement = 0;
-        }
-        if(steering.get() >= maxSteering){
-            steering.setValue(maxSteering);
-            steeringIncrement = 0;
-        }
-        if(steering.get() <= minSteering){
-            steering.setValue(minSteering);
-            steeringIncrement = 0;
-        }
+    }
 
-        //System.out.println(steering.get()+" "+throttle.get());
+    public void startVideoStream(){
+        Task<Void> task = new Task<Void>(){
+            @Override
+            protected Void call() throws Exception {
+                try {
+                    Process p = Runtime.getRuntime().exec("lib/stream.sh");
+                    BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                    String line = null;
+                    while ((line = br.readLine()) != null){
+                        System.out.println(line+'\n');
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        };
+        new Thread(task).start();
+    }
+
+    public void stopVideoStream(){
+
+    }
+
+    public void stopAll(){
+        stopRemoteControl();
+        startVideoStream();
     }
 
 
 
-    public void throttleUp(){
-        if(throttleIncrement < 0.5) throttleIncrement = 0.5;
-        throttleIncrement += throttleCoefficient;
+    public RemoteControl getRemoteControl() {
+        return remoteControl;
     }
 
-    public void throttleDown(){
-        if(throttleIncrement > -0.5) throttleIncrement = -0.5;
-        throttleIncrement -= throttleCoefficient;
+    public void setRemoteControl(RemoteControl remoteControl) {
+        this.remoteControl = remoteControl;
     }
 
-    public void stopThrottle(){
-        throttle.setValue(defaultThrottle);
-        throttleIncrement = 0;
+    public VideoStream getVideoStream() {
+        return videoStream;
     }
 
-    public void steeringLeft(){
-        steeringIncrement = -4;
+    public void setVideoStream(VideoStream videoStream) {
+        this.videoStream = videoStream;
     }
-
-    public void steeringRight(){
-        steeringIncrement = 4;
-    }
-
-    public void stopSteering(){
-        steering.setValue(defaultSteering);
-        steeringIncrement = 0;
-    }
-
-    private void sendValues() {
-        socket.sendValues(throttle.get()+1, steering.get()+1);
-    }
-
 }

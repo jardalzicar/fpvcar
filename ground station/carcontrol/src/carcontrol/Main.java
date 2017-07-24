@@ -1,41 +1,34 @@
 package carcontrol;
 
 import javafx.application.Application;
-import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
+
 
 public class Main extends Application {
     Slider steeringSlider;
     Slider throttleSlider;
+    Button videoButton;
+    Button controlButton;
+    Button joystickButton;
     BorderPane pane;
+    Scene scene;
     Controller controller;
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        controller = new Controller( new Socket("raspberrypi.local", 8888));
-
-        Task<Void> task = new Task<Void>(){
-            @Override
-            protected Void call() throws Exception {
-                controller.run();
-                return null;
-            }
-        };
-        new Thread(task).start();
-
+        controller = new Controller();
         initGUI();
 
-        Scene scene = new Scene(pane, 600, 400);
-        scene.setOnKeyPressed(new KeyPressedEventHandler());
-        scene.setOnKeyReleased(new KeyReleasedEventHandler());
-
+        scene = new Scene(pane, 600, 400);
         primaryStage.setTitle("RC car control");
         primaryStage.setScene(scene);
         primaryStage.setOnCloseRequest(event -> System.exit(0));
@@ -57,7 +50,7 @@ public class Main extends Application {
         throttleSlider.setShowTickMarks(true);
         throttleSlider.setMajorTickUnit(90);
         throttleSlider.setMinorTickCount(9);
-        throttleSlider.setDisable(false);
+        throttleSlider.setDisable(true);
         throttleSlider.setFocusTraversable(false);
         pane.setCenter(throttleSlider);
 
@@ -66,19 +59,39 @@ public class Main extends Application {
         steeringSlider.setShowTickMarks(true);
         steeringSlider.setMajorTickUnit(90);
         steeringSlider.setMinorTickCount(9);
-        steeringSlider.setDisable(false);
+        steeringSlider.setDisable(true);
         steeringSlider.setFocusTraversable(false);
         pane.setBottom(steeringSlider);
 
-        throttleSlider.valueProperty().bindBidirectional(controller.throttle);
-        steeringSlider.valueProperty().bindBidirectional(controller.steering);
-
-        // Also works ;)
-        /*
-        controller.steering.addListener((observable, oldValue, newValue) -> {
-            steeringSlider.setValue((int) newValue);
+        HBox hBox = new HBox(10);
+        videoButton = new Button("Video stream");
+        videoButton.setOnAction(event -> {
+            controller.startVideoStream();
         });
-        */
+
+        controlButton = new Button("Remote control");
+        controlButton.setOnAction(event -> {
+            controller.startRemoteControl(new Socket("raspberrypi.local", 8888));
+            setupRemoteControl();
+        });
+
+        joystickButton = new Button("Joystick");
+        joystickButton.setOnAction(event -> {
+            controller.startJoystick(new Socket("localhost", 8000));
+            //setupRemoteControl();
+        });
+
+        hBox.getChildren().addAll(videoButton,controlButton,joystickButton);
+        pane.setTop(hBox);
+    }
+
+    public void setupRemoteControl(){
+        throttleSlider.setDisable(false);
+        steeringSlider.setDisable(false);
+        throttleSlider.valueProperty().bindBidirectional(controller.getRemoteControl().throttle);
+        steeringSlider.valueProperty().bindBidirectional(controller.getRemoteControl().steering);
+        scene.setOnKeyPressed(new KeyPressedEventHandler());
+        scene.setOnKeyReleased(new KeyReleasedEventHandler());
     }
 
     private class KeyPressedEventHandler implements EventHandler<KeyEvent> {
@@ -86,10 +99,12 @@ public class Main extends Application {
         @Override
         public void handle(KeyEvent event) {
             switch (event.getCode()){
-                case UP: controller.throttleUp(); break;
-                case DOWN: controller.throttleDown(); break;
-                case RIGHT: controller.steeringLeft(); break;
-                case LEFT: controller.steeringRight(); break;
+                case UP: controller.getRemoteControl().throttleUp(); break;
+                case DOWN: controller.getRemoteControl().throttleDown();
+                    break;
+                case RIGHT: controller.getRemoteControl().steeringLeft();
+                    break;
+                case LEFT: controller.getRemoteControl().steeringRight(); break;
             }
         }
     }
@@ -100,9 +115,9 @@ public class Main extends Application {
         public void handle(KeyEvent event) {
             switch (event.getCode()){
                 case UP:
-                case DOWN: controller.stopThrottle(); break;
+                case DOWN: controller.getRemoteControl().stopThrottle(); break;
                 case LEFT:
-                case RIGHT:controller.stopSteering(); break;
+                case RIGHT:controller.getRemoteControl().stopSteering(); break;
             }
         }
     }
