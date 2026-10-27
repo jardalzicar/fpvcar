@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+._*
+
+# Java build output
+out/
+build/
+*.class
+
+# IntelliJ IDEA (per-user files; shared project config stays tracked)
+**/.idea/workspace.xml
+**/.idea/tasks.xml
+**/.idea/usage.statistics.xml
+**/.idea/shelf/
+**/.idea/dictionaries/
+
+# Python
+__pycache__/
+*.pyc
+
+# Arduino build output
+*.hex
+*.elf
