@@ -1,4 +1,4 @@
-# fpvcar
+# FPVCar
 
 FPV (first-person view) RC car built around a Raspberry Pi. The Pi streams live H.264 video from its camera to a ground station computer, and the ground station sends steering and throttle commands back over the network. An Arduino on the car turns those commands into PWM signals for the steering servo and the ESC.
 
